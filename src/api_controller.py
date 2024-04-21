@@ -17,8 +17,8 @@ class PatientAPIController:
         self.app.route("/patients", methods=["GET"])(self.get_patients)
         self.app.route("/patients/<patient_id>", methods=["GET"])(self.get_patient)
         self.app.route("/patients", methods=["POST"])(self.create_patient)
-        self.app.route("/patients/<patient_id>", methods=["PUT"])(self.update_patient)
-        self.app.route("/patients/<patient_id>", methods=["DELETE"])(self.delete_patient)
+        self.app.route("/patient/<patient_id>", methods=["PUT"])(self.update_patient)
+        self.app.route("/patient/<patient_id>", methods=["DELETE"])(self.delete_patient)
 
     def create_patient(self):
         """
@@ -33,7 +33,7 @@ class PatientAPIController:
             if not data:
                 return jsonify({"error": "Missing patient data in request body"}), 400
                 
-            patient = Patient(data["patient_name"], data["patient_age"], data["patient_gender"])
+            #patient = Patient(data["patient_name"], data["patient_age"], data["patient_gender"])
 
             patient_id = self.patient_db.insert_patient(data)
             if patient_id == None:
@@ -42,7 +42,6 @@ class PatientAPIController:
             new_patient = self.patient_db.fetch_patient_id_by_name(data["patient_name"])
 
             return jsonify(new_patient), 200
-            
 
         except Exception as e:
             print(f"Error creating patient: {e}")
@@ -98,21 +97,12 @@ class PatientAPIController:
         except Exception as e:
             print(f"Error updating patient: {e}")
             return jsonify({"error": "Internal server error"}), 500
-
-        # """
-        # Deletes a patient record from the database.
-
-        # Args:
-        #     patient_id (str): The ID of the patient to delete.
-
-        # Returns:
-        #     JSON: A JSON response indicating success or failure.
-        # """
     def delete_patient(self, patient_id):
         
         try:
             affected_rows = self.patient_db.delete_patient(patient_id)
-            if affected_rows is not None and affected_rows > 0:
+            print(affected_rows)
+            if affected_rows is not None:
                 return jsonify({"message": "Patient deleted successfully."}), 200
             else:
                 return jsonify({"error": "Failed to delete patient."}), 400

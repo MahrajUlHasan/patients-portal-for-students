@@ -23,7 +23,7 @@ class Patient:
         patient_room (str): Room number within the ward where the patient is located (must be a valid room based on `config.ROOM_NUMBERS`).
     """
 
-    def __init__(self, name, age, gender):
+    def __init__(self, name,gender,age):
         """
         Initializes a new Patient instance.
 
@@ -42,98 +42,64 @@ class Patient:
         self.patient_gender = self._validate_gender(gender)
         self.patient_checkin = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.patient_checkout = None
-        self.patient_ward = random.choice(WARD_NUMBERS)
-        self.patient_room = random.choice(ROOM_NUMBERS[self.patient_ward])
-      
+        self.patient_ward = None
+        self.patient_room = None
+    def get_id(self):
+        return self.patient_id
+    def get_name(self):
+        return self.patient_name
+    def get_age(self):
+        return self.patient_age
+    def get_gender(self):
+        return self.patient_gender
+    def get_room(self):
+        return self.patient_room
+    def get_ward(self):
+        return self.patient_ward
         
 
     def _validate_gender(self, gender):
-        """
-        Validates the provided gender against the available options in `config.GENDERS`.
-
-        Args:
-            gender (str): The gender to validate.
-
-        Returns:
-            str: The validated gender if valid, otherwise raises a ValueError.
-
-        Raises:
-            ValueError: If the provided gender is not in `config.GENDERS`.
-        """
-
         if gender not in GENDERS:
             raise ValueError(f"Invalid gender: {gender}. Valid options are: {', '.join(GENDERS)}")
         return gender
 
     def _validate_age(self, age):
-        """
-        Validates the provided age to be a positive integer.
-
-        Args:
-            age (int): The age to validate.
-
-        Raises:
-            ValueError: If the provided age is not a positive integer.
-        """
         if not isinstance(age, int) or age <= 0:
             raise ValueError(f"Invalid age: {age}. Age must be a positive integer.")
+        else:
+            return age
 
-    def update_room_and_ward(self, ward_number, room_number):
-        """
-        Updates the patient's ward and room number, performing validation.
-
-        Args:
-            ward_number (int): The new ward number for the patient.
-            room_number (str): The new room number for the patient.
-
-        Raises:
-            ValueError: If the ward number is invalid or the room number is not valid for the chosen ward.
-        """
-
-        if ward_number not in WARD_NUMBERS:
-            raise ValueError(f"Invalid ward number: {ward_number}. Valid options are: {', '.join(map(str, WARD_NUMBERS))}")
-
-        if room_number not in ROOM_NUMBERS[ward_number]:
-            raise ValueError(f"Invalid room number: {room_number} for ward {ward_number}. Valid options are: {', '.join(ROOM_NUMBERS[ward_number])}")
-
-        self.patient_ward = ward_number
+    def set_room(self, room_number):
+        if room_number not in ROOM_NUMBERS:
+            raise ValueError(f"Invalid room number: {room_number} for ward {self.patient_ward}. Valid options are: {', '.join(ROOM_NUMBERS)}")
         self.patient_room = room_number
 
+    def set_ward(self, ward_number):
+        if ward_number not in WARD_NUMBERS:
+            raise ValueError(f"Invalid ward number: {ward_number}. Valid options are: {', '.join(WARD_NUMBERS)}")
+        self.patient_ward = ward_number
     
 
-def commit_to_database(self, api_controller_url):
-    """
-    Commits the patient information to the database using the provided API controller URL.
+    def commit(self):
+        patient_data = {
+            "patient_id": self.patient_id,
+            "patient_name": self.patient_name,
+            "patient_age": self.patient_age,
+            "patient_gender": self.patient_gender,
+            "patient_checkin": self.patient_checkin,
+            "patient_checkout": self.patient_checkout,
+            "patient_ward": self.patient_ward,
+            "patient_room": self.patient_room,
+        }
 
-    This method sends a POST request to the API controller endpoint (assumed to be "/patients") with the patient data as JSON.
+        url = f"{API_CONTROLLER_URL}/patients"
+        try:
+            response = requests.post(url, json=patient_data)
+            response.raise_for_status() 
 
-    Args:
-        api_controller_url (str): The base URL of the API controller.
-
-    Raises:
-        ConnectionError: If there's an issue connecting to the API controller.
-        RequestException: If there's an error during the request.
-    """
-
-    patient_data = {
-        "patient_id": self.patient_id,
-        "patient_name": self.patient_name,
-        "patient_age": self.patient_age,
-        "patient_gender": self.patient_gender,
-        "patient_checkin": self.patient_checkin,
-        "patient_checkout": self.patient_checkout,
-        "patient_ward": self.patient_ward,
-        "patient_room": self.patient_room,
-    }
-
-    endpoint = f"{api_controller_url}/patients"
-    try:
-        response = requests.post(endpoint, json=patient_data)
-        response.raise_for_status() 
-
-        print(f"Patient data successfully committed. Response: {response.text}")
-    except (requests.exceptions.RequestException, ConnectionError) as e:
-        print(f"Error committing patient data to API controller: {e}")
+            print(f"Patient data successfully committed. Response: {response.text}")
+        except (requests.exceptions.RequestException, ConnectionError) as e:
+            print(f"Error committing patient data to API controller: {e}")
 
         
        
