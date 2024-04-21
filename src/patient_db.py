@@ -1,4 +1,4 @@
-"""patient_db module"""
+# """patient_db module"""
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import operators
