@@ -73,30 +73,6 @@ class Patient:
             "patient_room": self.patient_room,
         }
         
-        try:
-            r = requests.get(f"{API_CONTROLLER_URL}/patients/{self.patient_id}")
-            if r.raise_for_status() == 200:
-                response = requests.post(f"{API_CONTROLLER_URL}/patient", json=patient_data)
-                response.raise_for_status()
-            else:
-                response = requests.post(f"{API_CONTROLLER_URL}/patients", json=patient_data)
-                response.raise_for_status()
-            print(f"Patient data successfully committed. Response: {response.json()}")
-        except (requests.exceptions.RequestException, ConnectionError) as e:
-            print(f"Error committing patient data to API controller: {e}")
-    
-    def commit(self):
-        patient_data = {
-            "patient_id": self.patient_id,
-            "patient_name": self.patient_name,
-            "patient_age": self.patient_age,
-            "patient_gender": self.patient_gender,
-            "patient_checkin": self.patient_checkin,
-            "patient_checkout": self.patient_checkout,
-            "patient_ward": self.patient_ward,
-            "patient_room": self.patient_room,
-        }
-        
         get = f"{API_CONTROLLER_URL}/patients"
         put = f"{API_CONTROLLER_URL}/patient/{self.patient_id}"
         response = requests.get(get).json()
