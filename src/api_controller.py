@@ -46,18 +46,6 @@ class PatientAPIController:
             print(f"Error creating patient: {e}")
             return jsonify({"error": "Internal server error"}), 500
 
-    # def get_patients(self):
-    #     """
-    #     Retrieves all patient records from the database.
-
-    #     Returns:
-    #         JSON: A JSON list of all patient records.
-    #     """
-    #     patients = self.patient_db.select_all_patients()
-    #     if not patients:
-    #         return jsonify({"message": "No patients found"}), 200
-    #     return jsonify(patients), 200
-
     def get_patient(self, patient_id):
         """
         Retrieves a specific patient record based on the ID.
