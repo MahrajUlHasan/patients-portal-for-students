@@ -1,41 +1,12 @@
 from datetime import datetime
 import uuid
 import requests
-import random
-
-from config import GENDERS, WARD_NUMBERS, ROOM_NUMBERS , API_CONTROLLER_URL
-from patient_db_config import PATIENTS_TABLE
-from patient_db import PatientDB
+from itertools import chain
+from config import GENDERS, WARD_NUMBERS, ROOM_NUMBERS ,API_CONTROLLER_URL
 
 
 class Patient:
-    """
-    Patient model representing a patient in the hospital system.
-
-    Attributes:
-        patient_id (str): Unique identifier for the patient (generated using UUID).
-        patient_name (str): Name of the patient.
-        patient_age (int): Age of the patient.
-        patient_gender (str): Gender of the patient (must be in `config.GENDERS`).
-        patient_checkin (str): Date and time of patient check-in (automatically set).
-        patient_checkout (str): Date and time of patient check-out (initially None).
-        patient_ward (int): Ward number where the patient is located (must be in `config.WARD_NUMBERS`).
-        patient_room (str): Room number within the ward where the patient is located (must be a valid room based on `config.ROOM_NUMBERS`).
-    """
-
     def __init__(self, name,gender,age):
-        """
-        Initializes a new Patient instance.
-
-        Args:
-            name (str): Name of the patient.
-            age (int): Age of the patient.
-            gender (str): Gender of the patient.
-
-        Raises:
-            ValueError: If gender is invalid or age is not a positive integer.
-        """
-
         self.patient_id = str(uuid.uuid4())
         self.patient_name = name
         self.patient_age = self._validate_age(age)
@@ -45,17 +16,17 @@ class Patient:
         self.patient_ward = None
         self.patient_room = None
     def get_id(self):
-        return self.patient_id
+        return str(self.patient_id)
     def get_name(self):
-        return self.patient_name
+        return str(self.patient_name)
     def get_age(self):
-        return self.patient_age
+        return str(self.patient_age)
     def get_gender(self):
-        return self.patient_gender
+        return str(self.patient_gender)
     def get_room(self):
-        return self.patient_room
+        return str(self.patient_room)
     def get_ward(self):
-        return self.patient_ward
+        return str(self.patient_ward)
         
 
     def _validate_gender(self, gender):
@@ -70,15 +41,25 @@ class Patient:
             return age
 
     def set_room(self, room_number):
-        if room_number not in ROOM_NUMBERS:
-            raise ValueError(f"Invalid room number: {room_number} for ward {self.patient_ward}. Valid options are: {', '.join(ROOM_NUMBERS)}")
-        self.patient_room = room_number
+        rooms = list(ROOM_NUMBERS.values())
+        flatten = list(chain.from_iterable(rooms))
+        if not flatten.__contains__(str(room_number)):
+            raise ValueError(f"Invalid room number: {room_number}")
+        else:
+            self.patient_room = str(room_number)
+        
+            
 
     def set_ward(self, ward_number):
-        if ward_number not in WARD_NUMBERS:
-            raise ValueError(f"Invalid ward number: {ward_number}. Valid options are: {', '.join(WARD_NUMBERS)}")
-        self.patient_ward = ward_number
+        if not WARD_NUMBERS.__contains__(ward_number):
+            raise ValueError(f"Invalid ward number: {ward_number}")
+        else :
+            self.patient_ward = str(ward_number)
     
+    def _get_patient_by_id(uri, id):
+        uri = f"{API_CONTROLLER_URL}/patients/{id}"
+        response = requests.get(uri)
+        return response.json()
 
     def commit(self):
         patient_data = {
@@ -91,15 +72,48 @@ class Patient:
             "patient_ward": self.patient_ward,
             "patient_room": self.patient_room,
         }
-
-        url = f"{API_CONTROLLER_URL}/patients"
+        
         try:
-            response = requests.post(url, json=patient_data)
-            response.raise_for_status() 
-
-            print(f"Patient data successfully committed. Response: {response.text}")
+            r = requests.get(f"{API_CONTROLLER_URL}/patients/{self.patient_id}")
+            if r.raise_for_status() == 200:
+                response = requests.post(f"{API_CONTROLLER_URL}/patient", json=patient_data)
+                response.raise_for_status()
+            else:
+                response = requests.post(f"{API_CONTROLLER_URL}/patients", json=patient_data)
+                response.raise_for_status()
+            print(f"Patient data successfully committed. Response: {response.json()}")
         except (requests.exceptions.RequestException, ConnectionError) as e:
             print(f"Error committing patient data to API controller: {e}")
+    
+    def commit(self):
+        patient_data = {
+            "patient_id": self.patient_id,
+            "patient_name": self.patient_name,
+            "patient_age": self.patient_age,
+            "patient_gender": self.patient_gender,
+            "patient_checkin": self.patient_checkin,
+            "patient_checkout": self.patient_checkout,
+            "patient_ward": self.patient_ward,
+            "patient_room": self.patient_room,
+        }
+        
+        get = f"{API_CONTROLLER_URL}/patients"
+        put = f"{API_CONTROLLER_URL}/patient/{self.patient_id}"
+        response = requests.get(get).json()
+        ids = [patient['patient_id'] for patient in response if patient['patient_id'] == self.patient_id]
+        
+        if self.patient_id in ids:
+            response = requests.put(put, json=patient_data)
+            if response.status_code == 200:
+                print("patient commited to database")
+            else:
+                print("patient was not commited")
 
+        else:
+            response = requests.post(get, json=patient_data)
+            if response.status_code == 200:
+                print("patient commited to databasel")
+            else:
+                print("patient was not commited")
         
        

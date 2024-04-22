@@ -14,6 +14,7 @@ class PatientAPIController:
         """
         Sets up the routes for the API endpoints.
         """
+        
         self.app.route("/patients", methods=["GET"])(self.get_patients)
         self.app.route("/patients/<patient_id>", methods=["GET"])(self.get_patient)
         self.app.route("/patients", methods=["POST"])(self.create_patient)
@@ -32,8 +33,6 @@ class PatientAPIController:
             data = request.get_json()
             if not data:
                 return jsonify({"error": "Missing patient data in request body"}), 400
-                
-            #patient = Patient(data["patient_name"], data["patient_age"], data["patient_gender"])
 
             patient_id = self.patient_db.insert_patient(data)
             if patient_id == None:
@@ -47,17 +46,17 @@ class PatientAPIController:
             print(f"Error creating patient: {e}")
             return jsonify({"error": "Internal server error"}), 500
 
-    def get_patients(self):
-        """
-        Retrieves all patient records from the database.
+    # def get_patients(self):
+    #     """
+    #     Retrieves all patient records from the database.
 
-        Returns:
-            JSON: A JSON list of all patient records.
-        """
-        patients = self.patient_db.select_all_patients()
-        if not patients:
-            return jsonify({"message": "No patients found"}), 200
-        return jsonify(patients), 200
+    #     Returns:
+    #         JSON: A JSON list of all patient records.
+    #     """
+    #     patients = self.patient_db.select_all_patients()
+    #     if not patients:
+    #         return jsonify({"message": "No patients found"}), 200
+    #     return jsonify(patients), 200
 
     def get_patient(self, patient_id):
         """
@@ -114,6 +113,28 @@ class PatientAPIController:
         Runs the Flask application.
         """
         self.app.run()
+    
+
+    def get_patients(self):
+
+        search_name = request.args.get("search_name") 
+        if search_name == None:
+            patients = self.patient_db.select_all_patients()
+            if not patients:
+                return jsonify({"message": "No patients found"}), 200
+            return jsonify(patients), 200
+        else:
+            patient_ids = self.patient_db.fetch_patient_id_by_name(search_name)
+            if not patient_ids:
+                return jsonify({"message": "No patients found with that name"}), 200
+
+            patients = []
+            for patient_id in patient_ids:
+                patient = self.patient_db.select_patient(patient_id["patient_id"])
+                patients.append(patient)
+
+            return jsonify(patients), 200
+
 
 
 PatientAPIController()
